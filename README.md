@@ -19,4 +19,4 @@ Known issues
 Author
 -------
 
-* [that_shaman](https://http://thatshaman.blogspot.com/)
+* [that_shaman](https://thatshaman.blogspot.com/)
