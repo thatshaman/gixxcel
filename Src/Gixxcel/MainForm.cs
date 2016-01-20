@@ -61,7 +61,7 @@ namespace Gixxcel
         {
             // Show open file dialog and parse files in a seperate thread.
             OpenFileDialog openFileDialog = new OpenFileDialog();
-            openFileDialog.Filter = "String Files (*.raw)|*.raw|All files (*.*)|*.*";
+            openFileDialog.Filter = "String Files (*.raw;*.strs)|*.raw;*.strs|All files (*.*)|*.*";
             openFileDialog.Multiselect = true;
 
             if (openFileDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
@@ -98,7 +98,7 @@ namespace Gixxcel
             for (int i = 0; i < files.Length; i++)
             {
                 // Thread sometimes likes to go out of sync... dirty fix
-                if (i < files.Length)
+                if (i < (files.Length - 1))
                 {
                     string output = "";
 
@@ -106,7 +106,7 @@ namespace Gixxcel
                     this.BeginInvoke((MethodInvoker)delegate()
                     {
                         progress.Value = i;
-                        status.Text = "Updating: " + (i + 1).ToString() + " / " + files.Length.ToString() + " - " + files[i];
+                        status.Text = "Updating: " + (i + 1).ToString() + " / " + files.Length.ToString() + " - " + files[i].ToString();
                     });
 
                     // Read new file, and deserialize current file
