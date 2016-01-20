@@ -61,7 +61,7 @@ namespace Gixxcel
         {
             // Show open file dialog and parse files in a seperate thread.
             OpenFileDialog openFileDialog = new OpenFileDialog();
-            openFileDialog.Filter = "String Files (*.raw)|*.raw|All files (*.*)|*.*";
+            openFileDialog.Filter = "String Files (*.raw;*.strs)|*.raw;*.strs|All files (*.*)|*.*";
             openFileDialog.Multiselect = true;
 
             if (openFileDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
