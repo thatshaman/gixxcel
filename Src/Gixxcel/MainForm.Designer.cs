@@ -71,6 +71,7 @@ namespace Gixxcel
             this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.chineseToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this.grid)).BeginInit();
             this.toolstrip.SuspendLayout();
             this.statusStrip.SuspendLayout();
@@ -220,55 +221,56 @@ namespace Gixxcel
             this.frenchToolStripMenuItem,
             this.germanToolStripMenuItem,
             this.spanishToolStripMenuItem,
-            this.koreanToolStripMenuItem});
+            this.koreanToolStripMenuItem,
+            this.chineseToolStripMenuItem});
             this.languageToolStripMenuItem.Name = "languageToolStripMenuItem";
-            this.languageToolStripMenuItem.Size = new System.Drawing.Size(126, 22);
+            this.languageToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.languageToolStripMenuItem.Text = "Language";
             // 
             // englishToolStripMenuItem
             // 
             this.englishToolStripMenuItem.Name = "englishToolStripMenuItem";
-            this.englishToolStripMenuItem.Size = new System.Drawing.Size(116, 22);
+            this.englishToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.englishToolStripMenuItem.Text = "English";
             this.englishToolStripMenuItem.Click += new System.EventHandler(this.englishToolStripMenuItem_Click);
             // 
             // frenchToolStripMenuItem
             // 
             this.frenchToolStripMenuItem.Name = "frenchToolStripMenuItem";
-            this.frenchToolStripMenuItem.Size = new System.Drawing.Size(116, 22);
+            this.frenchToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.frenchToolStripMenuItem.Text = "French";
             this.frenchToolStripMenuItem.Click += new System.EventHandler(this.frenchToolStripMenuItem_Click);
             // 
             // germanToolStripMenuItem
             // 
             this.germanToolStripMenuItem.Name = "germanToolStripMenuItem";
-            this.germanToolStripMenuItem.Size = new System.Drawing.Size(116, 22);
+            this.germanToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.germanToolStripMenuItem.Text = "German";
             this.germanToolStripMenuItem.Click += new System.EventHandler(this.germanToolStripMenuItem_Click);
             // 
             // spanishToolStripMenuItem
             // 
             this.spanishToolStripMenuItem.Name = "spanishToolStripMenuItem";
-            this.spanishToolStripMenuItem.Size = new System.Drawing.Size(116, 22);
+            this.spanishToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.spanishToolStripMenuItem.Text = "Spanish";
             this.spanishToolStripMenuItem.Click += new System.EventHandler(this.spanishToolStripMenuItem_Click);
             // 
             // koreanToolStripMenuItem
             // 
             this.koreanToolStripMenuItem.Name = "koreanToolStripMenuItem";
-            this.koreanToolStripMenuItem.Size = new System.Drawing.Size(116, 22);
+            this.koreanToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.koreanToolStripMenuItem.Text = "Korean";
             this.koreanToolStripMenuItem.Click += new System.EventHandler(this.koreanToolStripMenuItem_Click);
             // 
             // toolStripSeparator1
             // 
             this.toolStripSeparator1.Name = "toolStripSeparator1";
-            this.toolStripSeparator1.Size = new System.Drawing.Size(123, 6);
+            this.toolStripSeparator1.Size = new System.Drawing.Size(149, 6);
             // 
             // exitToolStripMenuItem
             // 
             this.exitToolStripMenuItem.Name = "exitToolStripMenuItem";
-            this.exitToolStripMenuItem.Size = new System.Drawing.Size(126, 22);
+            this.exitToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.exitToolStripMenuItem.Text = "Exit";
             this.exitToolStripMenuItem.Click += new System.EventHandler(this.exit_Click);
             // 
@@ -286,6 +288,13 @@ namespace Gixxcel
             this.aboutToolStripMenuItem.Size = new System.Drawing.Size(107, 22);
             this.aboutToolStripMenuItem.Text = "About";
             this.aboutToolStripMenuItem.Click += new System.EventHandler(this.about_Click);
+            // 
+            // chineseToolStripMenuItem
+            // 
+            this.chineseToolStripMenuItem.Name = "chineseToolStripMenuItem";
+            this.chineseToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.chineseToolStripMenuItem.Text = "Chinese";
+            this.chineseToolStripMenuItem.Click += new System.EventHandler(this.chineseToolStripMenuItem_Click);
             // 
             // MainForm
             // 
@@ -339,6 +348,7 @@ namespace Gixxcel
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
         private System.Windows.Forms.ToolStripButton filterButton;
         private System.Windows.Forms.ToolStripButton searchButton;
+        private System.Windows.Forms.ToolStripMenuItem chineseToolStripMenuItem;
     }
 }
 

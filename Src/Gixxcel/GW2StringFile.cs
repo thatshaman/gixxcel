@@ -104,7 +104,7 @@ namespace Gixxcel
                 Array.Copy(fileBuffer, 0, strs, 0, 4);
 
                 // Check FourCC and make sure the file uses a valid language
-                if (fileBuffer[fileBuffer.Length - 2] < 5 && FourCC.SequenceEqual(strs))
+                if ((fileBuffer[fileBuffer.Length - 2] <= Convert.ToInt32(GW2Language.Chinese)) && FourCC.SequenceEqual(strs))
                 {
                     // Set language
                     Language = (GW2Language) fileBuffer[fileBuffer.Length - 2];
@@ -133,7 +133,12 @@ namespace Gixxcel
                         else
                         {
                             // Read the block
-                            if (header[4] == 16)
+
+                            ushort decryptionOffset = BitConverter.ToUInt16(header, 2);
+                            ushort bitsPerSymbol = BitConverter.ToUInt16(header, 4);
+
+                            bool isEncrypted = Convert.ToInt32(decryptionOffset) != 0 || Convert.ToInt32(bitsPerSymbol) != 0x10;
+                            if (!isEncrypted)
                             {
                                 // UTF-16 String
                                 entry.value = Encoding.Unicode.GetString(fileBuffer, (int)position, (int)blocksize);
@@ -154,7 +159,7 @@ namespace Gixxcel
                         //
                         //      Items.Add(entry);
                         //
-                        if (entry.type == GW2EntryType.String) Items.Add(entry);
+                        if (entry.type == GW2EntryType.String) { Items.Add(entry); }
 
                         // Next row
                         row++;

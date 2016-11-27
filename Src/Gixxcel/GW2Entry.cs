@@ -33,7 +33,8 @@ namespace Gixxcel
         Korean = 1,
         French = 2,
         German = 3,
-        Spanish = 4
+        Spanish = 4,
+        Chinese = 5
     }
 
     [Serializable]

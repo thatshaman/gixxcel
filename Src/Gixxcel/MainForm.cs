@@ -452,6 +452,11 @@ namespace Gixxcel
             setLanguage("Korean");
         }
 
+        private void chineseToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            setLanguage("Chinese");
+        }
+
         private void setLanguage(string language)
         {
             this.Language = language;
