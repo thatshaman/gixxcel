@@ -97,77 +97,77 @@ namespace Gixxcel
             // Loop through the files
             for (int i = 0; i < files.Length; i++)
             {
-                // Thread sometimes likes to go out of sync... dirty fix
-                if (i < (files.Length - 1))
-                {
-                    string output = "";
+                string output = "";
 
+                if (InvokeRequired)
+                {
                     // Update UI
-                    this.BeginInvoke((MethodInvoker)delegate()
+                    this.Invoke((MethodInvoker)delegate ()
                     {
                         progress.Value = i;
                         status.Text = "Updating: " + (i + 1).ToString() + " / " + files.Length.ToString() + " - " + files[i].ToString();
                     });
+                }
 
-                    // Read new file, and deserialize current file
-                    GW2StringFile newFile = new GW2StringFile(files[i], timestamp);
-                    GW2StringFile oldFile = new GW2StringFile();
+                // Read new file, and deserialize current file
+                GW2StringFile newFile = new GW2StringFile(files[i], timestamp);
+                GW2StringFile oldFile = new GW2StringFile();
 
-                    // Make sure your new file actually has data
-                    if (newFile.Items.Count > 0)
+                // Make sure your new file actually has data
+                if (newFile.Items.Count > 0)
+                {
+                    // Create language directory if necessary
+                    output = datafolder + @"data\" + newFile.Language.ToString() + @"\";
+                    if (!Directory.Exists(output)) Directory.CreateDirectory(output);
+
+                    // Deserialize old data if availible
+                    if (File.Exists(output + Path.GetFileNameWithoutExtension(newFile.Filename) + ".gw2"))
                     {
-                        // Create language directory if necessary
-                        output = datafolder + @"data\" + newFile.Language.ToString() + @"\";
-                        if (!Directory.Exists(output)) Directory.CreateDirectory(output);
-
-                        // Deserialize old data if availible
-                        if (File.Exists(output + Path.GetFileNameWithoutExtension(newFile.Filename) + ".gw2"))
-                        {
-                            using (FileStream filestream = new FileStream(output + Path.GetFileNameWithoutExtension(newFile.Filename) + ".gw2", FileMode.Open))
-                            {
-                                BinaryFormatter serializer = new BinaryFormatter();
-                                oldFile = (GW2StringFile)serializer.Deserialize(filestream);
-                            }
-                        }
-
-                        // Make sure the language and filename are reset (it tends to forget this one)
-                        oldFile.Language = newFile.Language;
-                        oldFile.Filename = newFile.Filename;
-
-                        // Loop through new items
-                        foreach (GW2Entry item in newFile.Items)
-                        {
-                            // Check if row is already present
-                            GW2Entry oldEntry = oldFile.Items.FirstOrDefault(a => a.row == item.row);
-
-                            if (oldEntry != null)
-                            {
-                                // Check if row has changed
-                                if (oldEntry.value != item.value)
-                                {
-                                    // Row has changed, update.
-                                    oldEntry.value = item.value;
-                                    oldEntry.stamp = item.stamp;
-                                }
-                            }
-                            else
-                            {
-                                // No row found, add it.
-                                oldFile.Items.Add(item);
-                            }
-                        }
-
-                        // Serialize back to file.
-                        using (FileStream filestream = new FileStream(output + Path.GetFileNameWithoutExtension(newFile.Filename) + ".gw2", FileMode.Create))
+                        using (FileStream filestream = new FileStream(output + Path.GetFileNameWithoutExtension(newFile.Filename) + ".gw2", FileMode.Open))
                         {
                             BinaryFormatter serializer = new BinaryFormatter();
-                            serializer.Serialize(filestream, oldFile);
+                            oldFile = (GW2StringFile)serializer.Deserialize(filestream);
                         }
-
-                        oldFile = null;
-                        newFile = null;
                     }
+
+                    // Make sure the language and filename are reset (it tends to forget this one)
+                    oldFile.Language = newFile.Language;
+                    oldFile.Filename = newFile.Filename;
+
+                    // Loop through new items
+                    foreach (GW2Entry item in newFile.Items)
+                    {
+                        // Check if row is already present
+                        GW2Entry oldEntry = oldFile.Items.FirstOrDefault(a => a.row == item.row);
+
+                        if (oldEntry != null)
+                        {
+                            // Check if row has changed
+                            if (oldEntry.value != item.value)
+                            {
+                                // Row has changed, update.
+                                oldEntry.value = item.value;
+                                oldEntry.stamp = item.stamp;
+                            }
+                        }
+                        else
+                        {
+                            // No row found, add it.
+                            oldFile.Items.Add(item);
+                        }
+                    }
+
+                    // Serialize back to file.
+                    using (FileStream filestream = new FileStream(output + Path.GetFileNameWithoutExtension(newFile.Filename) + ".gw2", FileMode.Create))
+                    {
+                        BinaryFormatter serializer = new BinaryFormatter();
+                        serializer.Serialize(filestream, oldFile);
+                    }
+
+                    oldFile = null;
+                    newFile = null;
                 }
+
             }
 
             // Restore UI to previous state and reload grid.
@@ -473,7 +473,5 @@ namespace Gixxcel
                 searchbox.Focus();
             }
         }
-
-        
     }
 }
