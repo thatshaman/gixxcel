@@ -70,7 +70,7 @@ namespace Gixxcel
                 //
                 // Moving on.
                 //
-                new Thread(delegate()
+                new Thread(delegate ()
                 {
                     updateFromFileList(openFileDialog.FileNames);
                 }).Start();
@@ -83,7 +83,7 @@ namespace Gixxcel
             DateTime timestamp = DateTime.Now;
 
             // Make sure your UI will update
-            this.BeginInvoke((MethodInvoker)delegate()
+            this.BeginInvoke((MethodInvoker)delegate ()
             {
                 toolstrip.Enabled = false;
                 progress.Maximum = files.Length;
@@ -103,7 +103,7 @@ namespace Gixxcel
                     string output = "";
 
                     // Update UI
-                    this.BeginInvoke((MethodInvoker)delegate()
+                    this.BeginInvoke((MethodInvoker)delegate ()
                     {
                         progress.Value = i;
                         status.Text = "Updating: " + (i + 1).ToString() + " / " + files.Length.ToString() + " - " + files[i].ToString();
@@ -171,7 +171,7 @@ namespace Gixxcel
             }
 
             // Restore UI to previous state and reload grid.
-            this.BeginInvoke((MethodInvoker)delegate()
+            this.BeginInvoke((MethodInvoker)delegate ()
                 {
                     toolstrip.Enabled = true;
                     progress.Value = 0;
@@ -182,7 +182,7 @@ namespace Gixxcel
 
         private void refreshGridAsync()
         {
-            new Thread(delegate()
+            new Thread(delegate ()
                     {
                         refreshGrid();
                     }).Start();
@@ -204,7 +204,7 @@ namespace Gixxcel
 
             string input = datafolder + @"data\" + Language + @"\";
 
-            this.BeginInvoke((MethodInvoker)delegate()
+            this.BeginInvoke((MethodInvoker)delegate ()
                 {
                     // Clear data grid
                     grid.DataSource = null;
@@ -251,7 +251,7 @@ namespace Gixxcel
                 }
             }
 
-            this.BeginInvoke((MethodInvoker)delegate()
+            this.BeginInvoke((MethodInvoker)delegate ()
                 {
                     status.Text = stringTable.Rows.Count.ToString() + " strings found.";
                     toolstrip.Enabled = true;
@@ -260,7 +260,9 @@ namespace Gixxcel
                     grid.DataSource = stringTable.DefaultView;
 
                     // Set column style
-                    grid.Columns[2].Width = this.Width - 100 - grid.Columns[0].Width - grid.Columns[1].Width;
+                    grid.Columns[0].Width = DeviceDpi + 20;
+                    grid.Columns[1].Width = DeviceDpi + 20;
+                    grid.Columns[2].Width = this.Width - 40 - (DeviceDpi * 3);
                     grid.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.DisplayedCells;
                     grid.Columns[2].DefaultCellStyle.WrapMode = DataGridViewTriState.True;
 
@@ -338,7 +340,7 @@ namespace Gixxcel
             }
 
             // Update rowcount
-            this.BeginInvoke((MethodInvoker)delegate()
+            this.BeginInvoke((MethodInvoker)delegate ()
                {
                    status.Text = grid.Rows.Count.ToString() + " strings found.";
                });
@@ -474,6 +476,6 @@ namespace Gixxcel
             }
         }
 
-        
+
     }
 }

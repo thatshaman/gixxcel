@@ -8,9 +8,9 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("Gixxcel")]
 [assembly: AssemblyDescription("GW2 String Reader")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("That Shaman")]
+[assembly: AssemblyCompany("that_shaman")]
 [assembly: AssemblyProduct("Gixxcel")]
-[assembly: AssemblyCopyright("Copyright © 2013")]
+[assembly: AssemblyCopyright("Copyright © 2013 - 2017")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -32,5 +32,5 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("1.0.1308.1501")]
-[assembly: AssemblyFileVersion("1.0.1308.1501")]
+[assembly: AssemblyVersion("1.0.1707.801")]
+[assembly: AssemblyFileVersion("1.0.1707.801")]
