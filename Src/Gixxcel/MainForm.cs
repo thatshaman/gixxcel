@@ -105,8 +105,11 @@ namespace Gixxcel
                     // Update UI
                     this.BeginInvoke((MethodInvoker)delegate ()
                     {
-                        progress.Value = i;
-                        status.Text = "Updating: " + (i + 1).ToString() + " / " + files.Length.ToString() + " - " + files[i].ToString();
+                        if (i < files.Length)
+                        {
+                            progress.Value = i;
+                            status.Text = "Updating: " + (i + 1).ToString() + " / " + files.Length.ToString() + " - " + files[i].ToString();
+                        }
                     });
 
                     // Read new file, and deserialize current file
