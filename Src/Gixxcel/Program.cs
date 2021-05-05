@@ -1,5 +1,5 @@
 ﻿/*  
-    Copyright 2013 That Shaman - thatshaman.blogspot.com
+    Copyright 2013 That Shaman - thatshaman.com
     This file is part of Gixxcel.
 
     Gixxcel is free software: you can redistribute it and/or modify
@@ -30,7 +30,7 @@ namespace Gixxcel
         static void Main()
         {
             Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
+            Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
             Application.Run(new MainForm());
         }
     }

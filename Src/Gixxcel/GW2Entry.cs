@@ -1,5 +1,5 @@
 ﻿/*  
-    Copyright 2013 That Shaman - thatshaman.blogspot.com
+    Copyright 2013 That Shaman - thatshaman.com
     This file is part of Gixxcel.
 
     Gixxcel is free software: you can redistribute it and/or modify
@@ -33,7 +33,8 @@ namespace Gixxcel
         Korean = 1,
         French = 2,
         German = 3,
-        Spanish = 4
+        Spanish = 4,
+        Chinese = 5
     }
 
     [Serializable]

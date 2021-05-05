@@ -1,5 +1,4 @@
 ﻿using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 // General Information about an assembly is controlled through the following 
@@ -10,7 +9,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("that_shaman")]
 [assembly: AssemblyProduct("Gixxcel")]
-[assembly: AssemblyCopyright("Copyright © 2013 - 2017")]
+[assembly: AssemblyCopyright("Copyright © 2013 - 2021")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -32,5 +31,5 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("1.0.1707.801")]
-[assembly: AssemblyFileVersion("1.0.1707.801")]
+[assembly: AssemblyVersion("2.0.2105.501")]
+[assembly: AssemblyFileVersion("2.0.2105.501")]

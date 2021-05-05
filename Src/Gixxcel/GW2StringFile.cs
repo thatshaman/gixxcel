@@ -1,5 +1,5 @@
 ﻿/*  
-    Copyright 2013 That Shaman - thatshaman.blogspot.com
+    Copyright 2013 - 2021 That Shaman - thatshaman.com
     This file is part of Gixxcel.
 
     Gixxcel is free software: you can redistribute it and/or modify
@@ -28,9 +28,9 @@ namespace Gixxcel
     public class GW2StringFile
     {
         // GW2 string files start with strs.
-        private static readonly byte[] FourCC = System.Text.Encoding.ASCII.GetBytes("strs");
+        private static readonly byte[] FourCC = Encoding.ASCII.GetBytes("strs");
 
-        public List<GW2Entry> Items = new List<GW2Entry>();
+        public List<GW2Entry> Items = new();
         public GW2Language Language = GW2Language.English;
         public string Filename = "";
 
@@ -82,7 +82,7 @@ namespace Gixxcel
             Filename = Path.GetFileName(file);
 
             // Open the string file.
-            byte[] fileBuffer = System.IO.File.ReadAllBytes(file);
+            byte[] fileBuffer = File.ReadAllBytes(file);
 
             // Byte 00 + 01 = string length
             // Byte 04      = string type
@@ -90,40 +90,43 @@ namespace Gixxcel
             byte[] strs = new byte[4];
 
             // Start reading after strs
-            long position = 4;
-
-            // Stores blocksize
-            long blocksize = 0;
+            long position = strs.Length;
 
             // Stores row number in file
             int row = 0;
 
             // Make sure your file is at least 6 bytes
-            if (fileBuffer.Length > 6)
+            if (fileBuffer.Length > header.Length)
             {
-                Array.Copy(fileBuffer, 0, strs, 0, 4);
+                Array.Copy(fileBuffer, 0, strs, 0, strs.Length);
 
                 // Check FourCC and make sure the file uses a valid language
-                if (fileBuffer[fileBuffer.Length - 2] < 5 && FourCC.SequenceEqual(strs))
+                if (fileBuffer[^2] < 6 && FourCC.SequenceEqual(strs))
                 {
                     // Set language
-                    Language = (GW2Language) fileBuffer[fileBuffer.Length - 2];
+                    Language = (GW2Language)fileBuffer[^2];
+
+                    if (Language == GW2Language.Chinese)
+                    {
+                        Language = GW2Language.Chinese;
+                    }
 
                     // Keep reading the file, we don't need the last 2 language bytes.
                     while (position < fileBuffer.Length - 2)
                     {
                         // Create a new entry
-                        GW2Entry entry = new GW2Entry();
+                        GW2Entry entry = new();
                         entry.row = row;
                         entry.stamp = timestamp;
 
                         // Read block header
-                        Array.Copy(fileBuffer, position, header, 0, 6);
-                        position += 6;
+                        Array.Copy(fileBuffer, position, header, 0, header.Length);
+                        position += header.Length;
 
+                        // Stores blocksize
                         // Get the string size
-                        blocksize = header[0] + (header[1] * 256) - 6;
-                        
+                        long blocksize = header[0] + (header[1] * 256) - header.Length;
+
                         if (blocksize <= 0)
                         {
                             // Empty block
@@ -136,7 +139,10 @@ namespace Gixxcel
                             if (header[4] == 16)
                             {
                                 // UTF-16 String
+
                                 entry.value = Encoding.Unicode.GetString(fileBuffer, (int)position, (int)blocksize);
+
+
                                 entry.type = GW2EntryType.String;
                             }
                             else
@@ -149,11 +155,6 @@ namespace Gixxcel
                             position += blocksize;
                         }
 
-                        // Add entry
-                        // NOTE: I've only set it to store actual strings to save all types change this line to:
-                        //
-                        //      Items.Add(entry);
-                        //
                         if (entry.type == GW2EntryType.String) Items.Add(entry);
 
                         // Next row
@@ -162,7 +163,6 @@ namespace Gixxcel
                 }
             }
 
-            fileBuffer = null;
 
             // Done!
             return Items.Count;

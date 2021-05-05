@@ -1,5 +1,5 @@
 ﻿/*  
-    Copyright 2013 That Shaman - thatshaman.blogspot.com
+    Copyright 2013 - 2021 That Shaman - thatshaman.com
     This file is part of Gixxcel.
 
     Gixxcel is free software: you can redistribute it and/or modify
@@ -20,182 +20,170 @@ using System;
 using System.Data;
 using System.IO;
 using System.Linq;
-using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
 using System.Media;
+using Newtonsoft.Json;
+using System.Diagnostics;
 
 namespace Gixxcel
 {
+
     public partial class MainForm : Form
     {
         // Dataset and table for gridview.
-        DataSet stringData = new DataSet();
+
+        DataSet stringData = new();
         DataTable stringTable;
 
         // Default language
         string Language = "English";
 
         // Store data in Local appdata, we don't want this much stuff in roaming.
-        string datafolder = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Gixxcel\";
+        readonly string datafolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Gixxcel");
 
         public MainForm()
         {
             InitializeComponent();
         }
 
-        private void main_Load(object sender, EventArgs e)
+        private void Main_Load(object sender, EventArgs e)
         {
             // Set title
-            this.Text = "Gixxcel [" + this.ProductVersion.ToString() + "]";
+            Text = "Gixxcel [" + ProductVersion.ToString() + "]";
 
-            // Make sure the data folder exists
-            if (!Directory.Exists(datafolder)) Directory.CreateDirectory(datafolder);
+            SetFolders();
+
+            Gixxcel.Update.FromPath(datafolder);
 
             // Load the grid
-            refreshGridAsync();
+            RefreshGrid();
         }
 
-        private void updateFromFolder()
+        public void SetFolders()
+        {
+            if (!Directory.Exists(Path.Combine(datafolder, "data"))) Directory.CreateDirectory(Path.Combine(datafolder, "data"));
+
+            string[] languages = new string[] { "English", "Korean", "French", "German", "Spanish", "Chinese" };
+
+            foreach (string language in languages)
+            {
+                if (!Directory.Exists(Path.Combine(datafolder, "data", language))) Directory.CreateDirectory(Path.Combine(datafolder, "data", language));
+            }
+        }
+
+
+        private void Import()
         {
             // Show open file dialog and parse files in a seperate thread.
-            OpenFileDialog openFileDialog = new OpenFileDialog();
-            openFileDialog.Filter = "String Files (*.raw;*.strs)|*.raw;*.strs|All files (*.*)|*.*";
-            openFileDialog.Multiselect = true;
-
-            if (openFileDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            OpenFileDialog openFileDialog = new()
             {
-                // Lazy and unsafe threading, what did you expect for an application put together in no time at all?
-                //
-                // Moving on.
-                //
+                Filter = "String Files (*.raw;*.strs)|*.raw;*.strs|All files (*.*)|*.*",
+                Multiselect = true
+            };
+
+            if (openFileDialog.ShowDialog() == DialogResult.OK)
+            {
                 new Thread(delegate ()
                 {
-                    updateFromFileList(openFileDialog.FileNames);
+                    ImportFromList(openFileDialog.FileNames);
                 }).Start();
             }
         }
 
-        private void updateFromFileList(string[] files)
+        private void ImportFromList(string[] files)
         {
+            BeginInvoke((Action)delegate ()
+            {
+                Text = "Gixxcel - Importing...";
+                grid.DataSource = new DataSet();
+                toolstrip.Enabled = false;
+            });
+
             // Set the timestamp for new / altered items.
             DateTime timestamp = DateTime.Now;
-
-            // Make sure your UI will update
-            this.BeginInvoke((MethodInvoker)delegate ()
-            {
-                toolstrip.Enabled = false;
-                progress.Maximum = files.Length;
-                progress.Value = 0;
-                status.Text = "0 / " + files.Length.ToString();
-            });
 
             // Create data directory if necessary
             if (!Directory.Exists(datafolder + "data")) Directory.CreateDirectory(datafolder + "data");
 
+            double step = (double)(100 / files.Length);
+
             // Loop through the files
             for (int i = 0; i < files.Length; i++)
             {
-                // Thread sometimes likes to go out of sync... dirty fix
-                if (i < (files.Length - 1))
+                // Read new file, and deserialize current file
+                GW2StringFile newFile = new(files[i], timestamp);
+                GW2StringFile serializedFile = new();
+
+                // Make sure your new file actually has data
+                if (newFile.Items.Count > 0)
                 {
-                    string output = "";
+                    string serializedPath = Path.Combine(datafolder, "data", newFile.Language.ToString(), Path.GetFileNameWithoutExtension(newFile.Filename) + ".json");
 
-                    // Update UI
-                    this.BeginInvoke((MethodInvoker)delegate ()
+
+                    // Deserialize old data if availible
+                    if (File.Exists(serializedPath))
                     {
-                        if (i < files.Length)
-                        {
-                            progress.Value = i;
-                            status.Text = "Updating: " + (i + 1).ToString() + " / " + files.Length.ToString() + " - " + files[i].ToString();
-                        }
-                    });
-
-                    // Read new file, and deserialize current file
-                    GW2StringFile newFile = new GW2StringFile(files[i], timestamp);
-                    GW2StringFile oldFile = new GW2StringFile();
-
-                    // Make sure your new file actually has data
-                    if (newFile.Items.Count > 0)
-                    {
-                        // Create language directory if necessary
-                        output = datafolder + @"data\" + newFile.Language.ToString() + @"\";
-                        if (!Directory.Exists(output)) Directory.CreateDirectory(output);
-
-                        // Deserialize old data if availible
-                        if (File.Exists(output + Path.GetFileNameWithoutExtension(newFile.Filename) + ".gw2"))
-                        {
-                            using (FileStream filestream = new FileStream(output + Path.GetFileNameWithoutExtension(newFile.Filename) + ".gw2", FileMode.Open))
-                            {
-                                BinaryFormatter serializer = new BinaryFormatter();
-                                oldFile = (GW2StringFile)serializer.Deserialize(filestream);
-                            }
-                        }
-
-                        // Make sure the language and filename are reset (it tends to forget this one)
-                        oldFile.Language = newFile.Language;
-                        oldFile.Filename = newFile.Filename;
-
-                        // Loop through new items
-                        foreach (GW2Entry item in newFile.Items)
-                        {
-                            // Check if row is already present
-                            GW2Entry oldEntry = oldFile.Items.FirstOrDefault(a => a.row == item.row);
-
-                            if (oldEntry != null)
-                            {
-                                // Check if row has changed
-                                if (oldEntry.value != item.value)
-                                {
-                                    // Row has changed, update.
-                                    oldEntry.value = item.value;
-                                    oldEntry.stamp = item.stamp;
-                                }
-                            }
-                            else
-                            {
-                                // No row found, add it.
-                                oldFile.Items.Add(item);
-                            }
-                        }
-
-                        // Serialize back to file.
-                        using (FileStream filestream = new FileStream(output + Path.GetFileNameWithoutExtension(newFile.Filename) + ".gw2", FileMode.Create))
-                        {
-                            BinaryFormatter serializer = new BinaryFormatter();
-                            serializer.Serialize(filestream, oldFile);
-                        }
-
-                        oldFile = null;
-                        newFile = null;
+                        serializedFile = JsonConvert.DeserializeObject<GW2StringFile>(File.ReadAllText(serializedPath));
                     }
+
+                    // Make sure the language and filename are reset (it tends to forget this one)
+                    serializedFile.Language = newFile.Language;
+                    serializedFile.Filename = newFile.Filename;
+
+                    // Loop through new items
+                    foreach (GW2Entry item in newFile.Items)
+                    {
+                        // Check if row is already present
+                        GW2Entry oldEntry = serializedFile.Items.FirstOrDefault(a => a.row == item.row);
+
+                        if (oldEntry != null)
+                        {
+                            // Check if row has changed
+                            if (oldEntry.value != item.value)
+                            {
+                                // Row has changed, update.
+                                oldEntry.value = item.value;
+                                oldEntry.stamp = item.stamp;
+                            }
+                        }
+                        else
+                        {
+                            // No row found, add it.
+                            serializedFile.Items.Add(item);
+                        }
+                    }
+
+
+                    File.WriteAllText(serializedPath, JsonConvert.SerializeObject(serializedFile, Formatting.Indented));
+
                 }
+
             }
 
-            // Restore UI to previous state and reload grid.
-            this.BeginInvoke((MethodInvoker)delegate ()
-                {
-                    toolstrip.Enabled = true;
-                    progress.Value = 0;
-                    status.Text = "";
-                    refreshGridAsync();
-                });
+            BeginInvoke((Action)delegate ()
+            {
+                Text = "Gixxcel [" + ProductVersion.ToString() + "]";
+                toolstrip.Enabled = true;
+            });
+
+            RefreshGridAsync();
+
         }
 
-        private void refreshGridAsync()
+        private void RefreshGridAsync()
         {
             new Thread(delegate ()
-                    {
-                        refreshGrid();
-                    }).Start();
+            {
+                RefreshGrid();
+            }).Start();
         }
 
         // Updates the gridview from serialized files
-        private void refreshGrid()
+        private void RefreshGrid()
         {
             // Clear previous data
-            stringData = null;
             stringData = new DataSet();
 
             // Generate columns
@@ -205,98 +193,92 @@ namespace Gixxcel
             stringTable.Columns.Add("key");
             stringTable.Columns.Add("value");
 
-            string input = datafolder + @"data\" + Language + @"\";
+            string inputFolder = Path.Combine(datafolder, "data", Language);
 
-            this.BeginInvoke((MethodInvoker)delegate ()
-                {
-                    // Clear data grid
-                    grid.DataSource = null;
-
-                    // Set status text
-                    status.Text = "Loading...";
-                    toolstrip.Enabled = false;
-                });
 
             // Make sure the data directory actually exists
-            if (Directory.Exists(input))
+            if (Directory.Exists(inputFolder))
             {
                 // Get file list
-                string[] files = Directory.GetFiles(input, "*.gw2");
+                string[] files = Directory.GetFiles(inputFolder, "*.json");
 
                 // Deserialize files
                 foreach (string file in files)
                 {
-                    using (FileStream fs = new FileStream(file, FileMode.Open))
+                    BeginInvoke((Action)delegate ()
                     {
-                        BinaryFormatter serializer = new BinaryFormatter();
-                        GW2StringFile gw2StringFile = (GW2StringFile)serializer.Deserialize(fs);
+                        Text = "Gixxcel - Loading: " + Path.GetFileNameWithoutExtension(file);
+                    });
 
-                        // Add row to data table
-                        string key = Path.GetFileNameWithoutExtension(gw2StringFile.Filename) + "_";
-                        foreach (GW2Entry entry in gw2StringFile.Items)
-                        {
-                            DataRow row = stringTable.NewRow();
+                    GW2StringFile gw2StringFile = JsonConvert.DeserializeObject<GW2StringFile>(File.ReadAllText(file));
 
-                            // Timestamp (system format)
-                            row["timestamp"] = entry.stamp;
+                    // Add row to data table
+                    string key = Path.GetFileNameWithoutExtension(gw2StringFile.Filename) + "_";
+                    foreach (GW2Entry entry in gw2StringFile.Items)
+                    {
+                        DataRow row = stringTable.NewRow();
 
-                            // Key = filename_row
-                            row["key"] = key + entry.row.ToString("0000");
+                        // Timestamp (system format)
+                        row["timestamp"] = entry.stamp;
 
-                            // Make sure to replace UNIX \n with \r\n for copy paste function.
-                            row["value"] = entry.value.Replace("\n", Environment.NewLine);
+                        // Key = filename_row
+                        row["key"] = key + entry.row.ToString("0000");
 
-                            stringTable.Rows.Add(row);
-                        }
+                        // Make sure to replace UNIX \n with \r\n for copy paste function.
+                        row["value"] = entry.value.Replace("\n", Environment.NewLine) ?? "Emtpy String";
 
-                        gw2StringFile = null;
+                        stringTable.Rows.Add(row);
                     }
+
                 }
             }
 
-            this.BeginInvoke((MethodInvoker)delegate ()
-                {
-                    status.Text = stringTable.Rows.Count.ToString() + " strings found.";
-                    toolstrip.Enabled = true;
+            BeginInvoke((Action)delegate ()
+            {
+                grid.DataSource = stringTable.DefaultView;
+                grid.Columns[0].Width = DeviceDpi + 20;
+                grid.Columns[1].Width = DeviceDpi + 20;
+                grid.Columns[2].Width = Width - 40 - (DeviceDpi * 3);
+                grid.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.DisplayedCells;
+                grid.Columns[2].DefaultCellStyle.WrapMode = DataGridViewTriState.True;
 
-                    // Bind datasource to grid
-                    grid.DataSource = stringTable.DefaultView;
+                grid.Sort(grid.Columns[0], System.ComponentModel.ListSortDirection.Descending);
 
-                    // Set column style
-                    grid.Columns[0].Width = DeviceDpi + 20;
-                    grid.Columns[1].Width = DeviceDpi + 20;
-                    grid.Columns[2].Width = this.Width - 40 - (DeviceDpi * 3);
-                    grid.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.DisplayedCells;
-                    grid.Columns[2].DefaultCellStyle.WrapMode = DataGridViewTriState.True;
+                FilterGrid(string.Empty);
+                filterButton.Checked = false;
 
-                    filterGrid(string.Empty);
-                    filterButton.Checked = false;
-                });
+
+                Text = "Gixxcel [" + ProductVersion.ToString() + "]";
+            });
+
+
+
+
         }
 
 
-        private void refreshbutton_Click(object sender, EventArgs e)
+        private void Refreshbutton_Click(object sender, EventArgs e)
         {
-            refreshGridAsync();
+            RefreshGrid();
         }
 
-        private void openbutton_Click(object sender, EventArgs e)
+        private void Importbutton_Click(object sender, EventArgs e)
         {
-            updateFromFolder();
+            Import();
         }
 
         // Escapes character for search funtion
         public static string EscapeSearchString(string value)
         {
             // Create the stringbuilder with a little bit of overhead
-            StringBuilder stringBuilder = new StringBuilder(value.Length + 8);
+            StringBuilder stringBuilder = new(value.Length + 8);
 
             for (int i = 0; i < value.Length; i++)
             {
                 char character = value[i];
                 if (character == '*' || character == '%' || character == '[' || character == ']')
                 {
-                    stringBuilder.Append("[").Append(character).Append("]");
+                    stringBuilder.Append('[').Append(character).Append(']');
                 }
                 else if (character == '\'')
                 {
@@ -311,13 +293,13 @@ namespace Gixxcel
             return stringBuilder.ToString();
         }
 
-        private void exit_Click(object sender, EventArgs e)
+        private void Exit_Click(object sender, EventArgs e)
         {
-            this.Close();
+            Close();
         }
 
         // Apply search
-        private void searchbox_KeyUp(object sender, KeyEventArgs e)
+        private void Searchbox_KeyUp(object sender, KeyEventArgs e)
         {
             if (e.KeyCode == Keys.Enter)
             {
@@ -326,12 +308,12 @@ namespace Gixxcel
                 e.SuppressKeyPress = true;
 
                 // Apply search filter
-                searchGrid(searchbox.Text);
+                SearchGrid(searchbox.Text);
             }
         }
 
         // Filter grid on value
-        private void filterGrid(string Value)
+        private void FilterGrid(string Value)
         {
             if (Value.Length == 0)
             {
@@ -342,19 +324,19 @@ namespace Gixxcel
                 stringTable.DefaultView.RowFilter = "value LIKE '%" + EscapeSearchString(Value) + "%'";
             }
 
-            // Update rowcount
-            this.BeginInvoke((MethodInvoker)delegate ()
-               {
-                   status.Text = grid.Rows.Count.ToString() + " strings found.";
-               });
+
+            BeginInvoke((Action)delegate ()
+            {
+                //Text = grid.Rows.Count.ToString() + " strings found.";
+            });
         }
 
-        private void filterButton_Click(object sender, EventArgs e)
+        private void FilterButton_Click(object sender, EventArgs e)
         {
             if (!filterButton.Checked)
             {
                 // Clear filter
-                filterGrid(string.Empty);
+                FilterGrid(string.Empty);
                 filterButton.ToolTipText = "Enable filter";
             }
             else
@@ -362,7 +344,7 @@ namespace Gixxcel
                 // Enbable filter
                 if (searchbox.Text.Length > 0)
                 {
-                    filterGrid(searchbox.Text);
+                    FilterGrid(searchbox.Text);
                     filterButton.ToolTipText = "Disable filter - " + searchbox.Text;
                 }
                 else
@@ -374,7 +356,7 @@ namespace Gixxcel
         }
 
         // Search for value in grid
-        private void searchGrid(string Value)
+        private void SearchGrid(string Value)
         {
             if (grid.CurrentCell != null)
             {
@@ -384,7 +366,7 @@ namespace Gixxcel
                 for (int i = start; i < grid.Rows.Count; i++)
                 {
                     // If value has been found select cell
-                    if (grid[2, i].Value.ToString().IndexOf(Value, StringComparison.OrdinalIgnoreCase) >= 0)
+                    if (grid[2, i].Value.ToString().Contains(Value, StringComparison.OrdinalIgnoreCase))
                     {
                         // Select cell
                         grid.CurrentCell = grid[2, i];
@@ -406,13 +388,13 @@ namespace Gixxcel
             }
         }
 
-        private void searchButton_Click(object sender, EventArgs e)
+        private void SearchButton_Click(object sender, EventArgs e)
         {
-            searchGrid(searchbox.Text);
+            SearchGrid(searchbox.Text);
         }
 
         // STOP - MA - KING - THOSE - DING - NOIS - ES !!!11!!110!!!!
-        private void searchbox_KeyDown(object sender, KeyEventArgs e)
+        private void Searchbox_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.KeyCode == Keys.Enter)
             {
@@ -422,53 +404,65 @@ namespace Gixxcel
             // Find next with F3
             if (e.KeyCode == Keys.F3)
             {
-                searchGrid(searchbox.Text);
+                SearchGrid(searchbox.Text);
             }
         }
 
-        private void about_Click(object sender, EventArgs e)
+        private void About_Click(object sender, EventArgs e)
         {
-            MessageBox.Show("Gixxcel - Copyright 2013 That Shaman - thatshaman.blogspot.com", "About");
+            MessageBox.Show("Gixxcel - Copyright 2013 -2021 that_shaman - thatshaman.com", "About");
         }
 
-
-        private void englishToolStripMenuItem_Click(object sender, EventArgs e)
+        private void Datafolder_Click(object sender, EventArgs e)
         {
-            setLanguage("English");
+            if (Directory.Exists(datafolder))
+            {
+                Process.Start("explorer.exe", datafolder);
+            }
         }
 
-        private void frenchToolStripMenuItem_Click(object sender, EventArgs e)
+        private void EnglishToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            setLanguage("French");
+            SetLanguage("English");
         }
 
-        private void germanToolStripMenuItem_Click(object sender, EventArgs e)
+        private void FrenchToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            setLanguage("German");
+            SetLanguage("French");
         }
 
-        private void spanishToolStripMenuItem_Click(object sender, EventArgs e)
+        private void GermanToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            setLanguage("Spanish");
+            SetLanguage("German");
         }
 
-        private void koreanToolStripMenuItem_Click(object sender, EventArgs e)
+        private void SpanishToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            setLanguage("Korean");
+            SetLanguage("Spanish");
         }
 
-        private void setLanguage(string language)
+        private void KoreanToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            this.Language = language;
-            refreshGridAsync();
+            SetLanguage("Korean");
         }
 
-        private void grid_KeyDown(object sender, KeyEventArgs e)
+        private void ChineseToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            SetLanguage("Chinese");
+        }
+
+        private void SetLanguage(string language)
+        {
+            Language = language;
+            RefreshGrid();
+        }
+
+        private void Grid_KeyDown(object sender, KeyEventArgs e)
         {
             // Find next: F3
             if (e.KeyCode == Keys.F3)
             {
-                searchGrid(searchbox.Text);
+                SearchGrid(searchbox.Text);
             }
 
             // Focus on search box: CTRL+F
