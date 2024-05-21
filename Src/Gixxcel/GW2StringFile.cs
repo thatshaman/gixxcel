@@ -114,6 +114,9 @@ namespace Gixxcel
                     // Keep reading the file, we don't need the last 2 language bytes.
                     while (position < fileBuffer.Length - 2)
                     {
+                        // Prevent overflow on incorrect header length
+                        if (position + header.Length > fileBuffer.Length) break;
+
                         // Create a new entry
                         GW2Entry entry = new();
                         entry.row = row;
